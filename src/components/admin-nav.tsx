@@ -6,18 +6,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
-  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu, ShieldCheck,
+  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu,
 } from "lucide-react";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/registrations", label: "Registrations", icon: FileCheck },
-  { href: "/admin/create-admin", label: "Create Admin", icon: UserPlus },
-  { href: "/admin/change-password", label: "Change Password", icon: KeyRound },
 ];
 
 export default function AdminNav({ user }: { user: { name: string; email: string } }) {
@@ -43,16 +48,16 @@ export default function AdminNav({ user }: { user: { name: string; email: string
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link href="/admin" className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary text-primary-foreground">
             <Plane className="size-4" />
           </div>
           <div className="hidden sm:block">
-            <span className="font-bold text-sm text-sidebar-primary-foreground">Skylink</span>
-            <span className="ml-1 text-xs text-sidebar-foreground/60">Admin</span>
+            <span className="font-bold text-sm text-primary">Skylink</span>
+            <span className="ml-1 text-xs text-muted-foreground">Admin</span>
           </div>
         </Link>
 
@@ -65,8 +70,8 @@ export default function AdminNav({ user }: { user: { name: string; email: string
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 isActive(href, exact)
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
             >
               <Icon className="size-4" />
@@ -75,49 +80,63 @@ export default function AdminNav({ user }: { user: { name: string; email: string
           ))}
         </nav>
 
-        {/* Right: admin badge + user */}
+        {/* Right: profile dropdown */}
         <div className="ml-auto flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-sidebar-primary/20 border border-sidebar-primary/30">
-            <ShieldCheck className="size-3 text-sidebar-primary" />
-            <span className="text-xs font-medium text-sidebar-primary">Admin</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Avatar className="h-7 w-7">
-              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden md:block text-sm text-sidebar-foreground/80 truncate max-w-28">
-              {user.name}
-            </span>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent hidden lg:flex"
-            onClick={handleSignOut}
-            title="Sign Out"
-          >
-            <LogOut className="size-4" />
-          </Button>
+          {/* Profile dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 gap-2 px-1.5 rounded-full hover:bg-muted hidden lg:flex">
+                <Avatar className="h-7 w-7">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground truncate max-w-28 hidden md:block">
+                  {user.name}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/admin/create-admin">
+                  <UserPlus className="size-4 mr-2" />
+                  Create Admin
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/admin/change-password">
+                  <KeyRound className="size-4 mr-2" />
+                  Change Password
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <LogOut className="size-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Mobile menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8 text-sidebar-foreground">
+              <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-64 bg-sidebar text-sidebar-foreground border-sidebar-border">
+            <SheetContent side="right" className="w-64">
               <div className="flex items-center gap-2 mb-6 pt-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
                   <Plane className="size-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Skylink Admin</p>
-                  <p className="text-xs text-sidebar-foreground/60 truncate">{user.email}</p>
+                  <p className="font-bold text-sm text-primary">Skylink Admin</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
               <nav className="flex flex-col gap-1">
@@ -129,17 +148,44 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
                       isActive(href, exact)
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                        : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted",
                     )}
                   >
                     <Icon className="size-4" />
                     {label}
                   </Link>
                 ))}
+                <div className="my-2 border-t border-border" />
+                <Link
+                  href="/admin/create-admin"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    isActive("/admin/create-admin")
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  )}
+                >
+                  <UserPlus className="size-4" />
+                  Create Admin
+                </Link>
+                <Link
+                  href="/admin/change-password"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    isActive("/admin/change-password")
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  )}
+                >
+                  <KeyRound className="size-4" />
+                  Change Password
+                </Link>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 text-left mt-2"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2"
                 >
                   <LogOut className="size-4" />
                   Sign Out

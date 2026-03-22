@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -17,6 +18,7 @@ import {
   XCircle,
   Loader2,
   AlertTriangle,
+  ZoomIn,
 } from "lucide-react";
 
 type Document = {
@@ -39,6 +41,7 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [docUrls, setDocUrls] = useState<Record<string, string>>({});
+  const [viewModal, setViewModal] = useState<{ label: string; url: string; mimeType: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -96,9 +99,47 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
   if (loading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+        {/* Header skeleton */}
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-9 rounded-md" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-6 w-44" />
+            <Skeleton className="h-3.5 w-56" />
+          </div>
+        </div>
+        {/* Student info skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-4 w-36" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="h-3.5 w-48" />
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="h-3.5 w-36" />
+            </div>
+            <Skeleton className="h-5 w-24 rounded-full" />
+          </CardContent>
+        </Card>
+        {/* Documents skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-4 w-40" />
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Skeleton className="h-64 w-full rounded-lg" />
+              <Skeleton className="h-64 w-full rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -199,11 +240,13 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
                 label="Academy ID"
                 doc={academyDoc}
                 url={academyDoc ? docUrls[academyDoc.id] : undefined}
+                onView={(url, mimeType) => setViewModal({ label: "Academy ID", url, mimeType })}
               />
               <DocumentViewer
                 label="Government ID"
                 doc={governmentDoc}
                 url={governmentDoc ? docUrls[governmentDoc.id] : undefined}
+                onView={(url, mimeType) => setViewModal({ label: "Government ID", url, mimeType })}
               />
             </div>
           )}
@@ -246,6 +289,27 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
           </div>
         </CardContent>
       </Card>
+
+      {/* Document fullscreen modal */}
+      <Dialog open={!!viewModal} onOpenChange={() => setViewModal(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewModal?.label}</DialogTitle>
+          </DialogHeader>
+          {viewModal && (
+            viewModal.mimeType === "application/pdf" ? (
+              <iframe src={viewModal.url} className="w-full h-[75vh] rounded-lg" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={viewModal.url}
+                alt={viewModal.label}
+                className="w-full max-h-[75vh] object-contain rounded-lg"
+              />
+            )
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -254,10 +318,12 @@ function DocumentViewer({
   label,
   doc,
   url,
+  onView,
 }: {
   label: string;
   doc?: Document;
   url?: string;
+  onView?: (url: string, mimeType: string) => void;
 }) {
   if (!doc) {
     return (
@@ -277,13 +343,18 @@ function DocumentViewer({
           {doc.originalFilename}
         </span>
       </div>
-      <div className="rounded-lg border overflow-hidden bg-muted/30">
+      <button
+        type="button"
+        className="w-full rounded-lg border overflow-hidden bg-muted/30 cursor-pointer relative group"
+        onClick={() => url && onView?.(url, doc.mimeType)}
+        disabled={!url}
+      >
         {!url ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           </div>
         ) : doc.mimeType === "application/pdf" ? (
-          <iframe src={url} className="w-full h-64" />
+          <iframe src={url} className="w-full h-64 pointer-events-none" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -292,7 +363,12 @@ function DocumentViewer({
             className="w-full h-64 object-contain"
           />
         )}
-      </div>
+        {url && (
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+            <ZoomIn className="size-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        )}
+      </button>
     </div>
   );
 }

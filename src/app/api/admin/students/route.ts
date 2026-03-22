@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { db } from "@/db";
 import { user, attendanceSession } from "@/db/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, ilike, or, inArray, notInArray } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET(req: NextRequest) {
@@ -14,10 +14,36 @@ export async function GET(req: NextRequest) {
 
     const url = req.nextUrl;
     const page = parseInt(url.searchParams.get("page") ?? "1");
+    const search = url.searchParams.get("search")?.trim() ?? "";
+    const filter = url.searchParams.get("filter") ?? "";
     const limit = 20;
     const offset = (page - 1) * limit;
 
-    // Get all approved students
+    // Get currently checked-in user IDs (needed for filter and status)
+    const activeSessionRows = await db
+      .select({ userId: attendanceSession.userId })
+      .from(attendanceSession)
+      .where(isNull(attendanceSession.checkOutAt));
+    const activeSessionUserIds = new Set(activeSessionRows.map((s) => s.userId));
+    const activeUserIdArray = [...activeSessionUserIds];
+
+    // Build WHERE conditions
+    const conditions = [eq(user.role, "student"), eq(user.status, "active")];
+
+    if (search) {
+      const term = `%${search}%`;
+      conditions.push(or(ilike(user.name, term), ilike(user.email, term))!);
+    }
+
+    if (filter === "checked-in" && activeUserIdArray.length > 0) {
+      conditions.push(inArray(user.id, activeUserIdArray));
+    } else if (filter === "checked-in" && activeUserIdArray.length === 0) {
+      // No one is checked in — return empty
+      return NextResponse.json({ students: [], page, limit });
+    } else if (filter === "checked-out" && activeUserIdArray.length > 0) {
+      conditions.push(notInArray(user.id, activeUserIdArray));
+    }
+
     const students = await db
       .select({
         id: user.id,
@@ -27,18 +53,9 @@ export async function GET(req: NextRequest) {
         status: user.status,
       })
       .from(user)
-      .where(eq(user.role, "student"))
+      .where(and(...conditions))
       .limit(limit)
       .offset(offset);
-
-    // Check which students are currently checked in
-    const activeSessionUserIds = new Set(
-      (await db
-        .select({ userId: attendanceSession.userId })
-        .from(attendanceSession)
-        .where(isNull(attendanceSession.checkOutAt))
-      ).map((s) => s.userId),
-    );
 
     const studentsWithStatus = students.map((s) => ({
       ...s,

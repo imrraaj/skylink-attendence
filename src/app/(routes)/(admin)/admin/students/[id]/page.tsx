@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Calendar, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import ResetPasswordButton from "./reset-password-button";
 
 export const metadata: Metadata = { title: "Student Detail" };
 
@@ -66,9 +67,12 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               </div>
             )}
           </div>
-          <Badge variant={student.status === "active" ? "secondary" : "destructive"} className="shrink-0">
-            {student.status === "active" ? "Active" : student.status === "pending" ? "Pending" : "Rejected"}
-          </Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            <ResetPasswordButton userId={student.id} />
+            <Badge variant={student.status === "active" ? "secondary" : "destructive"}>
+              {student.status === "active" ? "Active" : student.status === "pending" ? "Pending" : "Rejected"}
+            </Badge>
+          </div>
         </CardContent>
       </Card>
 

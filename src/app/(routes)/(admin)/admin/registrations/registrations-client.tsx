@@ -51,11 +51,19 @@ export default function RegistrationsClient() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
+        <Card>
+          <div className="space-y-0">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4 p-4 border-b border-border last:border-b-0">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-44" />
+                <Skeleton className="h-3 w-20 hidden sm:block" />
+                <Skeleton className="h-5 w-10 rounded-full" />
+                <Skeleton className="size-4 ml-auto" />
+              </div>
+            ))}
+          </div>
+        </Card>
       ) : registrations.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center py-16 text-muted-foreground">

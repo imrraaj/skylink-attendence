@@ -104,7 +104,18 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
         <CardContent>
           {loading ? (
             <div className="space-y-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="w-2 h-2 rounded-full" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-40" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+              ))}
             </div>
           ) : activeStudents.length === 0 ? (
             <div className="flex flex-col items-center py-8 text-muted-foreground">
