@@ -29,7 +29,7 @@ export default function StudentsClient() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("");
   const router = useRouter();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
