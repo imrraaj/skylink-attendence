@@ -1,0 +1,1 @@
+ALTER TABLE "registration_document" ALTER COLUMN "r2Key" DROP NOT NULL;

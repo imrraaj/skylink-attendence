@@ -11,6 +11,8 @@ import { Mail, Calendar, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import ResetPasswordButton from "./reset-password-button";
+import PrintAttendanceDialog from "./print-attendance-dialog";
+import BanStudentButton from "./ban-student-button";
 
 export const metadata: Metadata = { title: "Student Detail" };
 
@@ -41,7 +43,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Student Detail</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            Student Detail
+            {student.banned && <Badge variant="destructive" className="ml-2">Banned</Badge>}
+          </h1>
           <p className="text-sm text-muted-foreground">Viewing attendance history</p>
         </div>
       </div>
@@ -68,7 +73,9 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <PrintAttendanceDialog userId={student.id} studentName={student.name} />
             <ResetPasswordButton userId={student.id} />
+            <BanStudentButton userId={student.id} isBanned={student.banned ?? false} studentName={student.name} />
             <Badge variant={student.status === "active" ? "secondary" : "destructive"}>
               {student.status === "active" ? "Active" : student.status === "pending" ? "Pending" : "Rejected"}
             </Badge>

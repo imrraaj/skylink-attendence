@@ -28,6 +28,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
+    if (!doc.r2Key) {
+      return NextResponse.json({ error: "Document file has been removed" }, { status: 404 });
+    }
+
     const signedUrl = await getSignedDocumentUrl(doc.r2Key);
     return NextResponse.json({ url: signedUrl });
   } catch (error) {

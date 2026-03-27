@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
     const activeUserIdArray = [...activeSessionUserIds];
 
     // Build WHERE conditions
-    const conditions = [eq(user.role, "student"), eq(user.status, "active")];
+    // Removed strict eq(user.status, "active") to ensure we can list banned active users too if they were suspended
+    const conditions = [eq(user.role, "student")];
 
     if (search) {
       const term = `%${search}%`;
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
         email: user.email,
         createdAt: user.createdAt,
         status: user.status,
+        banned: user.banned,
       })
       .from(user)
       .where(and(...conditions))

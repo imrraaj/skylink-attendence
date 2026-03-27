@@ -16,6 +16,7 @@ type Student = {
   createdAt: string | null;
   isCheckedIn: boolean;
   status: string;
+  banned?: boolean;
 };
 
 type Filter = "" | "checked-in" | "checked-out";
@@ -154,7 +155,12 @@ export default function StudentsClient() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {s.isCheckedIn && (
+                    {s.banned && (
+                      <Badge variant="destructive" className="text-xs">
+                        Banned
+                      </Badge>
+                    )}
+                    {s.isCheckedIn && !s.banned && (
                       <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-xs gap-1">
                         <UserCheck className="size-3" />
                         Active

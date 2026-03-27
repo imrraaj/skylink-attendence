@@ -5,8 +5,16 @@ import { attendanceSession } from "@/db/schema";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { headers } from "next/headers";
 
-function getPeriodRange(period: string, offset: number): { start: Date; end: Date } {
+function getPeriodRange(period: string, offset: number, fromStr?: string | null, toStr?: string | null): { start: Date; end: Date } {
   const now = new Date();
+
+  if (period === "custom" && fromStr && toStr) {
+    const start = new Date(fromStr);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(toStr);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
 
   if (period === "today") {
     const start = new Date(now);
@@ -62,6 +70,8 @@ export async function GET(req: NextRequest) {
     const url = req.nextUrl;
     const period = url.searchParams.get("period") ?? "today";
     const offset = parseInt(url.searchParams.get("offset") ?? "0");
+    const fromStr = url.searchParams.get("from");
+    const toStr = url.searchParams.get("to");
     const requestedUserId = url.searchParams.get("userId");
 
     // Students can only view their own data; admins can view any user
@@ -72,7 +82,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { start, end } = getPeriodRange(period, offset);
+    const { start, end } = getPeriodRange(period, offset, fromStr, toStr);
 
     const sessions = await db
       .select()

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/db";
 import { user, registrationDocument, account, session as sessionTable } from "@/db/schema";
 import { deleteDocument } from "@/lib/r2-helpers";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET() {
@@ -47,7 +47,30 @@ export async function POST(req: NextRequest) {
     const { userId, action } = await req.json() as { userId: string; action: "approve" | "deny" };
 
     if (action === "approve") {
+      // 1. Activate the user
       await db.update(user).set({ status: "active" }).where(eq(user.id, userId));
+
+      // 2. Cleanup R2 documents to save space
+      const docs = await db
+        .select()
+        .from(registrationDocument)
+        .where(and(eq(registrationDocument.userId, userId), isNotNull(registrationDocument.r2Key)));
+
+      // Delete from R2 asynchronously
+      await Promise.all(
+        docs.map(async (d) => {
+          if (d.r2Key) {
+            await deleteDocument(d.r2Key).catch((e) => console.error("R2 cleanup failed:", e));
+          }
+        })
+      );
+
+      // Set DB r2Key to null
+      await db
+        .update(registrationDocument)
+        .set({ r2Key: null })
+        .where(eq(registrationDocument.userId, userId));
+
       return NextResponse.json({ success: true, message: "Account approved" });
     }
 
@@ -56,9 +79,15 @@ export async function POST(req: NextRequest) {
       const docs = await db
         .select()
         .from(registrationDocument)
-        .where(eq(registrationDocument.userId, userId));
+        .where(and(eq(registrationDocument.userId, userId), isNotNull(registrationDocument.r2Key)));
 
-      await Promise.all(docs.map((d) => deleteDocument(d.r2Key).catch(console.error)));
+      await Promise.all(
+        docs.map(async (d) => {
+          if (d.r2Key) {
+            await deleteDocument(d.r2Key).catch(console.error);
+          }
+        })
+      );
 
       // Delete related records first (no cascade on FK), then the user
       await db.delete(registrationDocument).where(eq(registrationDocument.userId, userId));

@@ -9,7 +9,7 @@ export const registrationDocument = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     type: text("type").notNull(), // "academy_id" | "government_id"
-    r2Key: text("r2Key").notNull(),
+    r2Key: text("r2Key"), // Nullable to allow cleanup on approve
     originalFilename: text("originalFilename").notNull(),
     mimeType: text("mimeType").notNull(),
     uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
