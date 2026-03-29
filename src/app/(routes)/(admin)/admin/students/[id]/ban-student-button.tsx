@@ -12,15 +12,18 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ShieldAlert, ShieldCheck, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function BanStudentButton({
   userId,
   isBanned,
   studentName,
+  className,
 }: {
   userId: string;
   isBanned: boolean;
   studentName: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -59,6 +62,7 @@ export default function BanStudentButton({
         variant={isBanned ? "secondary" : "destructive"} 
         size="sm" 
         onClick={() => setOpen(true)}
+        className={cn(className)}
       >
         {isBanned ? (
           <><ShieldCheck className="size-4 mr-1.5" />Unban Student</>
@@ -79,14 +83,15 @@ export default function BanStudentButton({
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex gap-3 justify-end mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end mt-4">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="w-full sm:w-auto">
               Cancel
             </Button>
             <Button 
               variant={isBanned ? "default" : "destructive"} 
               onClick={handleAction} 
               disabled={loading}
+              className="w-full sm:w-auto"
             >
               {loading && <Loader2 className="size-4 animate-spin mr-1.5" />}
               {isBanned ? "Yes, Unban Student" : "Yes, Ban Student"}

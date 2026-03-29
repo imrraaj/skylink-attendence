@@ -42,8 +42,8 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold flex flex-wrap items-center gap-2">
             Student Detail
             {student.banned && <Badge variant="destructive" className="ml-2">Banned</Badge>}
           </h1>
@@ -53,13 +53,13 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
 
       {/* Student info card */}
       <Card>
-        <CardContent className="p-5 flex items-center gap-4">
-          <Avatar className="h-14 w-14">
+        <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <Avatar className="h-14 w-14 shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             <h2 className="text-lg font-semibold truncate">{student.name}</h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Mail className="size-3" />
@@ -72,11 +72,23 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               </div>
             )}
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <PrintAttendanceDialog userId={student.id} studentName={student.name} />
-            <ResetPasswordButton userId={student.id} />
-            <BanStudentButton userId={student.id} isBanned={student.banned ?? false} studentName={student.name} />
-            <Badge variant={student.status === "active" ? "secondary" : "destructive"}>
+          <div className="w-full sm:w-auto grid grid-cols-1 sm:flex sm:flex-wrap gap-2">
+            <PrintAttendanceDialog
+              userId={student.id}
+              studentName={student.name}
+              className="w-full sm:w-auto"
+            />
+            <ResetPasswordButton userId={student.id} className="w-full sm:w-auto" />
+            <BanStudentButton
+              userId={student.id}
+              isBanned={student.banned ?? false}
+              studentName={student.name}
+              className="w-full sm:w-auto"
+            />
+            <Badge
+              variant={student.status === "active" ? "secondary" : "destructive"}
+              className="justify-center sm:justify-start"
+            >
               {student.status === "active" ? "Active" : student.status === "pending" ? "Pending" : "Rejected"}
             </Badge>
           </div>

@@ -90,7 +90,7 @@ export default function StudentsClient() {
                 className="pl-9"
               />
             </div>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
               <Button
                 variant={filter === "" ? "default" : "outline"}
                 size="sm"
@@ -166,7 +166,7 @@ export default function StudentsClient() {
                         Active
                       </Badge>
                     )}
-                    <span className="text-xs text-muted-foreground hidden sm:block">
+                    <span className="text-xs text-muted-foreground hidden md:block">
                       {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : ""}
                     </span>
                   </div>

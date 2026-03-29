@@ -45,7 +45,7 @@ export default function StudentNav({ user }: { user: { name: string; email: stri
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link href="/student" className="flex items-center gap-2 shrink-0">
@@ -114,21 +114,21 @@ export default function StudentNav({ user }: { user: { name: string; email: stri
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-64">
-              <div className="flex items-center gap-2 mb-6 pt-2">
+            <SheetContent side="right" className="w-[84vw] max-w-sm px-5 py-6">
+              <div className="flex items-center gap-2.5 mb-7 pt-1">
                 <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
                   <Plane className="size-4" />
                 </div>
                 <span className="font-bold text-primary">Skylink</span>
               </div>
-              <nav className="flex flex-col gap-1">
+              <nav className="flex flex-col gap-1.5">
                 {navLinks.map(({ href, label, icon: Icon }) => (
                   <Link
                     key={href}
                     href={href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium",
                       pathname === href
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -141,14 +141,14 @@ export default function StudentNav({ user }: { user: { name: string; email: stri
                 <Link
                   href="/student/change-password"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
                 >
                   <KeyRound className="size-4" />
                   Change Password
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left"
                 >
                   <LogOut className="size-4" />
                   Sign Out

@@ -98,7 +98,7 @@ export default function AttendanceTimer() {
 
   return (
     <Card className={`border-2 transition-colors ${activeSession ? "border-green-500/40 bg-green-50/50 dark:bg-green-950/20" : "border-border"}`}>
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row items-center gap-6">
           {/* Timer display */}
           <div className="flex-1 text-center sm:text-left">
@@ -111,7 +111,7 @@ export default function AttendanceTimer() {
 
             {activeSession ? (
               <>
-                <p className="text-4xl font-mono font-bold text-foreground tracking-wider">
+                <p className="text-3xl sm:text-4xl font-mono font-bold text-foreground tracking-wider">
                   {formatElapsed(elapsed)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -119,21 +119,21 @@ export default function AttendanceTimer() {
                 </p>
               </>
             ) : (
-              <p className="text-4xl font-mono font-bold text-muted-foreground/40 tracking-wider">
+              <p className="text-3xl sm:text-4xl font-mono font-bold text-muted-foreground/40 tracking-wider">
                 00:00:00
               </p>
             )}
           </div>
 
           {/* Action button */}
-          <div>
+          <div className="w-full sm:w-auto">
             {activeSession ? (
               <Button
                 size="lg"
                 variant="destructive"
                 onClick={() => handleAction("check-out")}
                 disabled={isPending}
-                className="min-w-32"
+                className="w-full sm:w-auto sm:min-w-32"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />
@@ -146,7 +146,7 @@ export default function AttendanceTimer() {
                 size="lg"
                 onClick={() => handleAction("check-in")}
                 disabled={isPending}
-                className="min-w-32 bg-green-600 hover:bg-green-700 text-white"
+                className="w-full sm:w-auto sm:min-w-32 bg-green-600 hover:bg-green-700 text-white"
               >
                 {isPending ? (
                   <Loader2 className="size-4 animate-spin" />

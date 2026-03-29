@@ -213,14 +213,14 @@ function DateRangePicker({
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 w-full sm:w-auto justify-end sm:justify-start">
       <Button variant="ghost" size="icon" className="size-7" onClick={() => onOffsetChange(offset - 1)}>
         <ChevronLeft className="size-4" />
       </Button>
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors min-w-[130px] justify-center rounded-md px-2 py-1 hover:bg-muted">
+          <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors min-w-[110px] sm:min-w-[130px] justify-center rounded-md px-2 py-1 hover:bg-muted">
             <CalendarIcon className="size-3" />
             {getPeriodDateRange(period, offset)}
           </button>
@@ -279,13 +279,13 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
       <div className="space-y-4 mt-4">
         {/* Total time card skeleton */}
         <Card className="border-muted">
-          <CardContent className="p-4 flex items-center gap-4">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
             <Skeleton className="w-12 h-12 rounded-xl" />
             <div className="space-y-1.5">
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-8 w-20" />
             </div>
-            <div className="ml-auto text-right space-y-1.5">
+            <div className="sm:ml-auto sm:text-right space-y-1.5">
               <Skeleton className="h-3 w-14 ml-auto" />
               <Skeleton className="h-6 w-8 ml-auto" />
             </div>
@@ -313,15 +313,15 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
   return (
     <div className="mt-4 space-y-4">
       <Card className="bg-primary/5 border-primary/20">
-        <CardContent className="p-4 flex items-center gap-4">
+        <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10">
             <Clock className="size-5 text-primary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Total Time</p>
-            <p className="text-3xl font-bold text-foreground">{formatDuration(data.totalMinutes)}</p>
+            <p className="text-2xl sm:text-3xl font-bold text-foreground">{formatDuration(data.totalMinutes)}</p>
           </div>
-          <div className="ml-auto text-right">
+          <div className="sm:ml-auto sm:text-right">
             <p className="text-xs text-muted-foreground">Sessions</p>
             <p className="text-xl font-semibold">{data.sessions.length}</p>
           </div>
@@ -338,7 +338,7 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
           {data.sessions.map((s, i) => (
             <div
               key={s.id}
-              className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
@@ -352,7 +352,7 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
                   <p className="text-xs text-muted-foreground">{formatDate(s.checkInAt)}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:justify-end">
                 {s.checkOutAt ? (
                   <Badge variant="secondary" className="text-xs">
                     {formatDuration(sessionDuration(s))}
@@ -390,7 +390,7 @@ export default function AttendanceSummary({ userId }: { userId: string }) {
   return (
     <Card>
       <CardHeader className="pb-0">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CardTitle className="text-base font-semibold">Attendance History</CardTitle>
           <DateRangePicker period={activeTab} offset={offset} onOffsetChange={setOffset} />
         </div>

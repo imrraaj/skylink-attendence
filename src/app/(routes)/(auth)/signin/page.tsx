@@ -29,7 +29,7 @@ export default function SignInPage() {
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-accent font-semibold hover:underline">
+          <Link href="/signup" className="text-primary font-semibold hover:underline">
             Register
           </Link>
         </div>

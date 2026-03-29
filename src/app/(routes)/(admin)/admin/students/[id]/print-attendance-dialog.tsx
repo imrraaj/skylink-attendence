@@ -15,6 +15,7 @@ import { Printer, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { pdf, Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // --- PDF Generate Function --- //
 type Session = { checkInAt: string; checkOutAt: string | null };
@@ -112,9 +113,11 @@ function PdfDocument({
 export default function PrintAttendanceDialog({
   userId,
   studentName,
+  className,
 }: {
   userId: string;
   studentName: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -174,7 +177,7 @@ export default function PrintAttendanceDialog({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className={cn(className)}>
         <Printer className="size-4 mr-1.5" />
         Print Attendance
       </Button>
@@ -189,12 +192,12 @@ export default function PrintAttendanceDialog({
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">From Date</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal min-w-0">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange.from ? format(dateRange.from, "PPP") : <span>Pick a date</span>}
                     </Button>
@@ -214,7 +217,7 @@ export default function PrintAttendanceDialog({
                 <label className="text-sm font-medium">To Date</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start text-left font-normal">
+                    <Button variant="outline" className="w-full justify-start text-left font-normal min-w-0">
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {dateRange.to ? format(dateRange.to, "PPP") : <span>Pick a date</span>}
                     </Button>
@@ -232,11 +235,11 @@ export default function PrintAttendanceDialog({
             </div>
           </div>
           
-          <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={generating}>
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 mt-4">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={generating} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleDownload} disabled={generating}>
+            <Button onClick={handleDownload} disabled={generating} className="w-full sm:w-auto">
               {generating ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Printer className="size-4 mr-1.5" />}
               {generating ? "Generating..." : "Download PDF"}
             </Button>

@@ -130,8 +130,8 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-64">
-              <div className="flex items-center gap-2 mb-6 pt-2">
+            <SheetContent side="right" className="w-[84vw] max-w-sm px-5 py-6">
+              <div className="flex items-center gap-2.5 mb-7 pt-1">
                 <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
                   <Plane className="size-4" />
                 </div>
@@ -140,14 +140,14 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                   <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
-              <nav className="flex flex-col gap-1">
+              <nav className="flex flex-col gap-1.5">
                 {navLinks.map(({ href, label, icon: Icon, exact }) => (
                   <Link
                     key={href}
                     href={href}
                     onClick={() => setOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium",
                       isActive(href, exact)
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -157,12 +157,12 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                     {label}
                   </Link>
                 ))}
-                <div className="my-2 border-t border-border" />
+                <div className="my-2.5 border-t border-border" />
                 <Link
                   href="/admin/create-admin"
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium",
                     isActive("/admin/create-admin")
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -175,7 +175,7 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                   href="/admin/change-password"
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium",
                     isActive("/admin/change-password")
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -186,7 +186,7 @@ export default function AdminNav({ user }: { user: { name: string; email: string
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 text-left mt-2"
                 >
                   <LogOut className="size-4" />
                   Sign Out
