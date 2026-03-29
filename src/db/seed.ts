@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth/server";
 import { db } from "./index";
 import { user } from "./schema";
+import { options } from "./schema/options";
 import { eq } from "drizzle-orm";
 
 const ADMIN_EMAIL = "admin@skylink.com";
@@ -9,6 +10,12 @@ const ADMIN_NAME = "Super Admin";
 
 async function seed() {
   console.log("🌱 Seeding database...");
+
+  // Ensure default options always exist
+  await db
+    .insert(options)
+    .values({ key: "wifiRestrictionEnabled", value: "true" })
+    .onConflictDoNothing({ target: options.key });
 
   // Check if admin already exists
   const existing = await db
@@ -19,6 +26,7 @@ async function seed() {
 
   if (existing.length > 0) {
     console.log("✅ Admin already exists:", ADMIN_EMAIL);
+    console.log("✅ Default settings ensured");
     process.exit(0);
   }
 
@@ -41,6 +49,7 @@ async function seed() {
   console.log(`   Email: ${ADMIN_EMAIL}`);
   console.log(`   Password: ${ADMIN_PASSWORD}`);
   console.log("⚠️  Change the password after first login!");
+  console.log("✅ Default settings ensured");
   process.exit(0);
 }
 

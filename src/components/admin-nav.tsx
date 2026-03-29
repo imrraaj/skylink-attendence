@@ -16,13 +16,14 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
-  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu,
+  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu, Settings,
 } from "lucide-react";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/registrations", label: "Registrations", icon: FileCheck },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminNav({ user }: { user: { name: string; email: string } }) {
@@ -48,7 +49,7 @@ export default function AdminNav({ user }: { user: { name: string; email: string
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link href="/admin" className="flex items-center gap-2 shrink-0">

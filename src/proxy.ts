@@ -11,6 +11,8 @@ import {
 // Cache the resolved DDNS IP for 60 seconds
 let cachedAllowedIp: string | null = null;
 let cacheExpiry = 0;
+let cachedWifiRestriction: boolean | null = null;
+let wifiRestrictionExpiry = 0;
 
 async function getAllowedIp(): Promise<string | null> {
   const host = process.env.ALLOWED_DDNS_HOST;
@@ -39,10 +41,42 @@ async function getAllowedIp(): Promise<string | null> {
   return null;
 }
 
+async function getWifiRestrictionEnabled(request: NextRequest): Promise<boolean> {
+  if (cachedWifiRestriction !== null && Date.now() < wifiRestrictionExpiry) {
+    return cachedWifiRestriction;
+  }
+
+  try {
+    const cookie = request.headers.get("cookie") ?? "";
+    const res = await fetch(`${request.nextUrl.origin}/api/internal/settings`, {
+      headers: { cookie },
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as { wifiRestrictionEnabled?: boolean };
+      cachedWifiRestriction = data.wifiRestrictionEnabled ?? true;
+      wifiRestrictionExpiry = Date.now() + 30_000;
+      return cachedWifiRestriction;
+    }
+  } catch {
+    // fall through to secure default
+  }
+
+  return cachedWifiRestriction ?? true;
+}
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Prevent middleware self-fetch loops for internal settings lookup.
+  if (pathname === "/api/internal/settings") return NextResponse.next();
+
   // IP restriction: only allow traffic from the configured network
-  const allowedIp = await getAllowedIp();
-  if (allowedIp) {
+  const host = process.env.ALLOWED_DDNS_HOST;
+  if (host && (await getWifiRestrictionEnabled(request))) {
+    const allowedIp = await getAllowedIp();
+    if (!allowedIp) return NextResponse.next();
+
     const clientIp =
       request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       request.headers.get("x-real-ip");
@@ -118,7 +152,6 @@ export async function proxy(request: NextRequest) {
   }
 
   const session = getSessionCookie(request);
-  const { pathname } = request.nextUrl;
 
   // Always allow static assets and internal Next.js routes
   if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) {
