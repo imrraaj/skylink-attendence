@@ -11,11 +11,13 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import InputPasswordContainer from "../components/input-password";
 import { cn } from "@/lib/utils";
 import {
   User, Mail, Loader2, Upload, FileCheck, AlertCircle,
-  CheckCircle2, ArrowLeft
+  CheckCircle2, ArrowLeft, GraduationCap, UserCog
 } from "lucide-react";
 
 type DocFile = { file: File; preview: string } | null;
@@ -32,7 +34,7 @@ export default function SignUpForm() {
 
   const form = useForm<Step1Values>({
     resolver: zodResolver(Step1Schema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { firstName: "", lastName: "", email: "", password: "", confirmPassword: "", role: "student" },
   });
 
   const err = (f: keyof Step1Values) =>
@@ -74,10 +76,19 @@ export default function SignUpForm() {
 
     startTransition(async () => {
       // Step 1: Create the account (status will be "pending" by default)
+      const fullName = `${step1Data.firstName} ${step1Data.lastName}`;
       const res = await signUp.email({
-        name: step1Data.name,
+        name: fullName,
         email: step1Data.email,
         password: step1Data.password,
+        // Pass role via fetchOptions to be handled in server
+        fetchOptions: {
+          headers: {
+            "x-signup-role": step1Data.role,
+            "x-signup-firstname": step1Data.firstName,
+            "x-signup-lastname": step1Data.lastName,
+          },
+        },
       });
 
       if (res.error) {
@@ -124,21 +135,80 @@ export default function SignUpForm() {
       {step === 1 && (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleStep1)} className="flex flex-col gap-4">
+            {/* Role selection */}
             <FormField
               control={form.control}
-              name="name"
+              name="role"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                      <Input placeholder="Full name" className={cn("pl-9", err("name"))} {...field} />
-                    </div>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="grid grid-cols-2 gap-3"
+                    >
+                      <Label
+                        htmlFor="role-student"
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg border-2 p-3 cursor-pointer transition-colors",
+                          field.value === "student"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-muted-foreground/30"
+                        )}
+                      >
+                        <RadioGroupItem value="student" id="role-student" className="sr-only" />
+                        <GraduationCap className="size-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Student</span>
+                      </Label>
+                      <Label
+                        htmlFor="role-instructor"
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg border-2 p-3 cursor-pointer transition-colors",
+                          field.value === "instructor"
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-muted-foreground/30"
+                        )}
+                      >
+                        <RadioGroupItem value="instructor" id="role-instructor" className="sr-only" />
+                        <UserCog className="size-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Instructor</span>
+                      </Label>
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                        <Input placeholder="First name" className={cn("pl-9", err("firstName"))} {...field} />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Last name" className={err("lastName")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

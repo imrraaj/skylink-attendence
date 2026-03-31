@@ -13,13 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileCheck, ChevronRight } from "lucide-react";
+import { FileCheck, ChevronRight, GraduationCap, UserCog } from "lucide-react";
 
 type Document = { id: string; type: string; originalFilename: string };
 type Registration = {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
+  role: "student" | "instructor";
   createdAt: string;
   documents: Document[];
 };
@@ -36,13 +39,20 @@ export default function RegistrationsClient() {
       .finally(() => setLoading(false));
   }, []);
 
+  const getDisplayName = (reg: Registration) => {
+    if (reg.firstName && reg.lastName) {
+      return `${reg.firstName} ${reg.lastName}`;
+    }
+    return reg.name;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Pending Registrations</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Review and approve or deny new student registrations
+            Review and approve or deny new student and instructor registrations
           </p>
         </div>
         <Badge variant="secondary" className="text-sm px-3">
@@ -78,6 +88,7 @@ export default function RegistrationsClient() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Registered</TableHead>
                 <TableHead>Documents</TableHead>
@@ -91,7 +102,22 @@ export default function RegistrationsClient() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/admin/registrations/${reg.id}`)}
                 >
-                  <TableCell className="font-medium">{reg.name}</TableCell>
+                  <TableCell className="font-medium">{getDisplayName(reg)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs gap-1">
+                      {reg.role === "instructor" ? (
+                        <span className="flex items-center gap-1">
+                          <UserCog className="size-3" />
+                          Instructor
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="size-3" />
+                          Student
+                        </span>
+                      )}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {reg.email}
                   </TableCell>

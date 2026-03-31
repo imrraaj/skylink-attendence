@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GraduationCap, ChevronLeft, ChevronRight, UserCheck, Search } from "lucide-react";
+import { UserCog, ChevronLeft, ChevronRight, UserCheck, Search } from "lucide-react";
 
-type Student = {
+type Instructor = {
   id: string;
   name: string;
   firstName?: string;
@@ -24,8 +24,8 @@ type Student = {
 
 type Filter = "" | "checked-in" | "checked-out";
 
-export default function StudentsClient() {
-  const [students, setStudents] = useState<Student[]>([]);
+export default function InstructorsClient() {
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -51,14 +51,14 @@ export default function StudentsClient() {
 
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), role: "student" });
+    const params = new URLSearchParams({ page: String(page), role: "instructor" });
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (filter) params.set("filter", filter);
 
     fetch(`/api/admin/students?${params}`)
       .then((r) => r.json())
       .then((d) => {
-        setStudents(d.students ?? []);
+        setInstructors(d.students ?? []);
         setHasMore((d.students ?? []).length === 20);
       })
       .finally(() => setLoading(false));
@@ -68,17 +68,17 @@ export default function StudentsClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Students</h1>
-          <p className="text-sm text-muted-foreground mt-1">All registered students and their attendance status</p>
+          <h1 className="text-2xl font-bold">Instructors</h1>
+          <p className="text-sm text-muted-foreground mt-1">All registered instructors and their attendance status</p>
         </div>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Student List</CardTitle>
+            <CardTitle className="text-base">Instructor List</CardTitle>
             {!loading && (
-              <Badge variant="secondary">{students.length} shown</Badge>
+              <Badge variant="secondary">{instructors.length} shown</Badge>
             )}
           </div>
 
@@ -137,19 +137,19 @@ export default function StudentsClient() {
                 </div>
               ))}
             </div>
-          ) : students.length === 0 ? (
+          ) : instructors.length === 0 ? (
             <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <GraduationCap className="size-10 mb-2 opacity-30" />
+              <UserCog className="size-10 mb-2 opacity-30" />
               <p className="text-sm">
-                {debouncedSearch || filter ? "No students match your search or filter." : "No students found."}
+                {debouncedSearch || filter ? "No instructors match your search or filter." : "No instructors found."}
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              {students.map((s) => (
+              {instructors.map((s) => (
                 <button
                   key={s.id}
-                  onClick={() => router.push(`/admin/students/${s.id}`)}
+                  onClick={() => router.push(`/admin/instructors/${s.id}`)}
                   className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
                 >
                   <div className="flex items-center gap-3">

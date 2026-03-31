@@ -19,6 +19,8 @@ import {
   Loader2,
   AlertTriangle,
   ZoomIn,
+  GraduationCap,
+  UserCog,
 } from "lucide-react";
 
 type Document = {
@@ -31,7 +33,10 @@ type Document = {
 type Registration = {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
+  role: "student" | "instructor";
   createdAt: string;
   documents: Document[];
 };
@@ -95,6 +100,15 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
       setProcessing(null);
     }
   }
+
+  const getDisplayName = (r: Registration) => {
+    if (r.firstName && r.lastName) {
+      return `${r.firstName} ${r.lastName}`;
+    }
+    return r.name;
+  };
+
+  const isInstructor = reg?.role === "instructor";
 
   if (loading) {
     return (
@@ -185,7 +199,7 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
         <div>
           <h1 className="text-2xl font-bold">Registration Detail</h1>
           <p className="text-sm text-muted-foreground">
-            Review student details and documents
+            Review {isInstructor ? "instructor" : "student"} details and documents
           </p>
         </div>
       </div>
@@ -193,12 +207,27 @@ export default function RegistrationDetailClient({ userId }: { userId: string })
       {/* Student Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Student Information</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            {isInstructor ? "Instructor" : "Student"} Information
+            <Badge variant="outline" className="text-xs gap-1 ml-2">
+              {isInstructor ? (
+                <span className="flex items-center gap-1">
+                  <UserCog className="size-3" />
+                  Instructor
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <GraduationCap className="size-3" />
+                  Student
+                </span>
+              )}
+            </Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3">
             <User className="size-4 text-muted-foreground shrink-0" />
-            <span className="text-sm font-medium">{reg.name}</span>
+            <span className="text-sm font-medium">{getDisplayName(reg)}</span>
           </div>
           <div className="flex items-center gap-3">
             <Mail className="size-4 text-muted-foreground shrink-0" />

@@ -17,6 +17,10 @@ export default async function StudentDashboardPage() {
     day: "numeric",
   });
 
+  // Get first name for greeting
+  const userWithNames = session!.user as { firstName?: string; name: string };
+  const firstName = userWithNames.firstName || userWithNames.name.split(" ")[0];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -26,7 +30,7 @@ export default async function StudentDashboardPage() {
           <span>{today}</span>
         </div>
         <h1 className="text-2xl font-bold text-foreground">
-          Welcome, {session!.user.name.split(" ")[0]}
+          Welcome, {firstName}
         </h1>
         <p className="text-sm text-muted-foreground">Track your attendance for today</p>
       </div>

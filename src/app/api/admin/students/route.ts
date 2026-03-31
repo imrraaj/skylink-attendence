@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server";
 import { db } from "@/db";
 import { user, attendanceSession } from "@/db/schema";
-import { eq, and, isNull, ilike, or, inArray, notInArray } from "drizzle-orm";
+import { eq, and, isNull, ilike, or, inArray, notInArray, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET(req: NextRequest) {
@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const page = parseInt(url.searchParams.get("page") ?? "1");
     const search = url.searchParams.get("search")?.trim() ?? "";
     const filter = url.searchParams.get("filter") ?? "";
+    const roleFilter = url.searchParams.get("role") ?? ""; // "student" | "instructor" | ""
     const limit = 20;
     const offset = (page - 1) * limit;
 
@@ -27,13 +28,29 @@ export async function GET(req: NextRequest) {
     const activeSessionUserIds = new Set(activeSessionRows.map((s) => s.userId));
     const activeUserIdArray = [...activeSessionUserIds];
 
-    // Build WHERE conditions
-    // Removed strict eq(user.status, "active") to ensure we can list banned active users too if they were suspended
-    const conditions = [eq(user.role, "student")];
+    // Build WHERE conditions - include both students and instructors unless filtered
+    const conditions = [];
+    
+    if (roleFilter === "student") {
+      conditions.push(eq(user.role, "student"));
+    } else if (roleFilter === "instructor") {
+      conditions.push(eq(user.role, "instructor"));
+    } else {
+      // Show both students and instructors (not admins)
+      conditions.push(or(eq(user.role, "student"), eq(user.role, "instructor"))!);
+    }
 
     if (search) {
       const term = `%${search}%`;
-      conditions.push(or(ilike(user.name, term), ilike(user.email, term))!);
+      // Search firstName, lastName, name (computed), and email
+      conditions.push(
+        or(
+          ilike(user.firstName, term),
+          ilike(user.lastName, term),
+          ilike(user.name, term),
+          ilike(user.email, term)
+        )!
+      );
     }
 
     if (filter === "checked-in" && activeUserIdArray.length > 0) {
@@ -49,7 +66,10 @@ export async function GET(req: NextRequest) {
       .select({
         id: user.id,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
+        role: user.role,
         createdAt: user.createdAt,
         status: user.status,
         banned: user.banned,

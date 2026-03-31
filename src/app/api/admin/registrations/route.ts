@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/server";
 import { db } from "@/db";
 import { user, registrationDocument, account, session as sessionTable } from "@/db/schema";
 import { deleteDocument } from "@/lib/r2-helpers";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { headers } from "next/headers";
 
 export async function GET() {
@@ -13,11 +13,11 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Get all pending users with their documents
+    // Get all pending users (students and instructors) with their documents
     const pendingUsers = await db
       .select()
       .from(user)
-      .where(and(eq(user.status, "pending"), eq(user.role, "student")));
+      .where(and(eq(user.status, "pending"), inArray(user.role, ["student", "instructor"])));
 
     // Get documents for each user
     const usersWithDocs = await Promise.all(

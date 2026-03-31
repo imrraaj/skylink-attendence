@@ -16,12 +16,13 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import {
-  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu, Settings,
+  Plane, LayoutDashboard, Users, FileCheck, UserPlus, KeyRound, LogOut, Menu, Settings, UserCog, GraduationCap,
 } from "lucide-react";
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/students", label: "Students", icon: Users },
+  { href: "/admin/students", label: "Students", icon: GraduationCap },
+  { href: "/admin/instructors", label: "Instructors", icon: UserCog },
   { href: "/admin/registrations", label: "Registrations", icon: FileCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
