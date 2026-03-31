@@ -150,13 +150,13 @@ export default function StudentsClient() {
                 <button
                   key={s.id}
                   onClick={() => router.push(`/admin/students/${s.id}`)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
+                  className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className={`w-2 h-2 rounded-full shrink-0 ${s.isCheckedIn ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`} />
-                    <div>
-                      <p className="text-sm font-medium">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">{s.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{s.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
