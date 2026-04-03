@@ -27,6 +27,7 @@ function formatElapsed(checkInAt: string): string {
 
 export default function AdminDashboardClient({ adminName }: { adminName: string }) {
   const [students, setStudents] = useState<(ActiveStudent & { checkInAt?: string })[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [, setTick] = useState(0);
@@ -34,12 +35,13 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
   useEffect(() => {
     async function load() {
       const [studRes, regRes] = await Promise.all([
-        fetch("/api/admin/students"),
+        fetch("/api/admin/students?role=student"),
         fetch("/api/admin/registrations"),
       ]);
-      const { students: s } = await studRes.json();
+      const { students: s, total } = await studRes.json();
       const { registrations: r } = await regRes.json();
       setStudents(s ?? []);
+      setTotalStudents(total ?? 0);
       setPendingCount((r ?? []).length);
       setLoading(false);
     }
@@ -53,7 +55,6 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
   }, []);
 
   const activeStudents = students.filter((s) => s.isCheckedIn);
-  const totalStudents = students.filter((s) => s.status === "active");
 
   return (
     <div className="space-y-6">
@@ -75,7 +76,7 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
         <StatCard
           icon={Users}
           label="Total Students"
-          value={loading ? "—" : String(totalStudents.length)}
+          value={loading ? "—" : String(totalStudents)}
           color="blue"
         />
         <StatCard

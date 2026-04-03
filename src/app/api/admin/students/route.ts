@@ -62,29 +62,37 @@ export async function GET(req: NextRequest) {
       conditions.push(notInArray(user.id, activeUserIdArray));
     }
 
-    const students = await db
-      .select({
-        id: user.id,
-        name: user.name,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdAt,
-        status: user.status,
-        banned: user.banned,
-      })
-      .from(user)
-      .where(and(...conditions))
-      .limit(limit)
-      .offset(offset);
+    const whereClause = and(...conditions);
+
+    const [students, [{ count: total }]] = await Promise.all([
+      db
+        .select({
+          id: user.id,
+          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+          status: user.status,
+          banned: user.banned,
+        })
+        .from(user)
+        .where(whereClause)
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(user)
+        .where(whereClause),
+    ]);
 
     const studentsWithStatus = students.map((s) => ({
       ...s,
       isCheckedIn: activeSessionUserIds.has(s.id),
     }));
 
-    return NextResponse.json({ students: studentsWithStatus, page, limit });
+    return NextResponse.json({ students: studentsWithStatus, page, limit, total });
   } catch (error) {
     console.error("Students list error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

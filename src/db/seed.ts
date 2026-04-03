@@ -82,40 +82,40 @@ async function seed() {
   console.log("✅ Default settings ensured");
 
   // Seed students with faker
-  console.log(`\n🎓 Seeding ${NUM_STUDENTS} students...`);
-  let studentsCreated = 0;
-  for (let i = 0; i < NUM_STUDENTS; i++) {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const email = faker.internet.email({ firstName, lastName, provider: "student.skylink.com" }).toLowerCase();
+  // console.log(`\n🎓 Seeding ${NUM_STUDENTS} students...`);
+  // let studentsCreated = 0;
+  // for (let i = 0; i < NUM_STUDENTS; i++) {
+  //   const firstName = faker.person.firstName();
+  //   const lastName = faker.person.lastName();
+  //   const email = faker.internet.email({ firstName, lastName, provider: "student.skylink.com" }).toLowerCase();
     
-    const created = await createUser(firstName, lastName, email, "student");
-    if (created) {
-      studentsCreated++;
-      console.log(`   ✅ ${studentsCreated}. ${firstName} ${lastName}`);
-    }
-  }
-  console.log(`   Created ${studentsCreated} students`);
+  //   const created = await createUser(firstName, lastName, email, "student");
+  //   if (created) {
+  //     studentsCreated++;
+  //     console.log(`   ✅ ${studentsCreated}. ${firstName} ${lastName}`);
+  //   }
+  // }
+  // console.log(`   Created ${studentsCreated} students`);
 
-  // Seed instructors with faker
-  console.log(`\n👨‍🏫 Seeding ${NUM_INSTRUCTORS} instructors...`);
-  let instructorsCreated = 0;
-  for (let i = 0; i < NUM_INSTRUCTORS; i++) {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const email = faker.internet.email({ firstName, lastName, provider: "instructor.skylink.com" }).toLowerCase();
+  // // Seed instructors with faker
+  // console.log(`\n👨‍🏫 Seeding ${NUM_INSTRUCTORS} instructors...`);
+  // let instructorsCreated = 0;
+  // for (let i = 0; i < NUM_INSTRUCTORS; i++) {
+  //   const firstName = faker.person.firstName();
+  //   const lastName = faker.person.lastName();
+  //   const email = faker.internet.email({ firstName, lastName, provider: "instructor.skylink.com" }).toLowerCase();
     
-    const created = await createUser(firstName, lastName, email, "instructor");
-    if (created) {
-      instructorsCreated++;
-      console.log(`   ✅ ${instructorsCreated}. ${firstName} ${lastName}`);
-    }
-  }
-  console.log(`   Created ${instructorsCreated} instructors`);
+  //   const created = await createUser(firstName, lastName, email, "instructor");
+  //   if (created) {
+  //     instructorsCreated++;
+  //     console.log(`   ✅ ${instructorsCreated}. ${firstName} ${lastName}`);
+  //   }
+  // }
+  // console.log(`   Created ${instructorsCreated} instructors`);
 
-  console.log("\n🎉 Seeding complete!");
-  console.log("   Test password for all users: Test@123456");
-  process.exit(0);
+  // console.log("\n🎉 Seeding complete!");
+  // console.log("   Test password for all users: Test@123456");
+  // process.exit(0);
 }
 
 seed().catch((err) => {
