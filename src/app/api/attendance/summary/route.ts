@@ -4,61 +4,8 @@ import { db } from "@/db";
 import { attendanceSession } from "@/db/schema";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { headers } from "next/headers";
-
-function getPeriodRange(period: string, offset: number, fromStr?: string | null, toStr?: string | null): { start: Date; end: Date } {
-  const now = new Date();
-
-  if (period === "custom" && fromStr && toStr) {
-    const start = new Date(fromStr);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(toStr);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "today") {
-    const start = new Date(now);
-    start.setDate(start.getDate() + offset);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "week") {
-    const start = new Date(now);
-    const day = start.getDay();
-    start.setDate(start.getDate() - day + offset * 7);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "month") {
-    const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  if (period === "year") {
-    const start = new Date(now.getFullYear() + offset, 0, 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start.getFullYear(), 11, 31);
-    end.setHours(23, 59, 59, 999);
-    return { start, end };
-  }
-
-  // fallback: today
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-  return { start, end };
-}
+import { getAttendancePeriodRange, isAttendancePeriod } from "@/lib/attendance-period";
+import { differenceInMinutes } from "date-fns";
 
 export async function GET(req: NextRequest) {
   try {
@@ -68,7 +15,8 @@ export async function GET(req: NextRequest) {
     }
 
     const url = req.nextUrl;
-    const period = url.searchParams.get("period") ?? "today";
+    const periodParam = url.searchParams.get("period") ?? "week";
+    const period = periodParam === "custom" || isAttendancePeriod(periodParam) ? periodParam : "week";
     const offset = parseInt(url.searchParams.get("offset") ?? "0");
     const fromStr = url.searchParams.get("from");
     const toStr = url.searchParams.get("to");
@@ -82,7 +30,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { start, end } = getPeriodRange(period, offset, fromStr, toStr);
+    const { start, end } = getAttendancePeriodRange(period, offset, fromStr, toStr);
 
     const sessions = await db
       .select()
@@ -100,8 +48,7 @@ export async function GET(req: NextRequest) {
     let totalMinutes = 0;
     for (const s of sessions) {
       if (s.checkOutAt) {
-        const diff = s.checkOutAt.getTime() - s.checkInAt.getTime();
-        totalMinutes += Math.floor(diff / 60000);
+        totalMinutes += differenceInMinutes(s.checkOutAt, s.checkInAt);
       }
     }
 

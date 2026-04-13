@@ -4,6 +4,7 @@ import { user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import AttendanceSummary from "@/components/attendance-summary";
+import AttendanceTimer from "@/components/attendance-timer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -99,8 +100,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
         </CardContent>
       </Card>
 
+      <AttendanceTimer userId={student.id} subjectName={displayName} />
+
       {/* Attendance summary — reused component */}
-      <AttendanceSummary userId={student.id} />
+      <AttendanceSummary userId={student.id} canManage />
     </div>
   );
 }
