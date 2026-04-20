@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Clock, LogIn, LogOut, Loader2 } from "lucide-react";
+import { formatDisplayTime } from "@/lib/display-timezone";
 
 type ActiveSession = { id: string; checkInAt: string; checkOutAt: null };
 
@@ -17,7 +18,7 @@ function formatElapsed(ms: number): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return formatDisplayTime(iso);
 }
 
 function notifyAttendanceUpdated(userId?: string) {

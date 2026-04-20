@@ -3,6 +3,7 @@ import { getServerSession } from "@/lib/auth/get-session";
 import AttendanceTimer from "@/components/attendance-timer";
 import AttendanceSummary from "@/components/attendance-summary";
 import { CalendarDays } from "lucide-react";
+import { formatDisplayWeekdayDate } from "@/lib/display-timezone";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -10,12 +11,7 @@ export default async function StudentDashboardPage() {
   const session = await getServerSession();
   const userId = session!.user.id;
 
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const today = formatDisplayWeekdayDate(new Date());
 
   // Get first name for greeting
   const userWithNames = session!.user as { firstName?: string; name: string };

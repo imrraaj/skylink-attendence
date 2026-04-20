@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, UserCheck, Clock, FileCheck } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { formatDisplayShortDate, formatDisplayTime } from "@/lib/display-timezone";
 
 type ActiveStudent = {
   id: string;
@@ -20,7 +20,7 @@ type PendingRegistration = { id: string };
 
 function formatTime(iso: string | null): string {
   if (!iso) return "No time";
-  return format(new Date(iso), "hh:mm a");
+  return formatDisplayTime(iso);
 }
 
 export default function AdminDashboardClient({ adminName }: { adminName: string }) {
@@ -82,7 +82,7 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
         <StatCard
           icon={Clock}
           label="Today"
-          value={format(new Date(), "MMM d")}
+          value={formatDisplayShortDate(new Date())}
           color="blue"
         />
       </div>
@@ -120,7 +120,7 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
             <div className="space-y-2">
               {activeStudents.map((s) => (
                 <Link key={s.id} href={`/admin/students/${s.id}`}>
-                  <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between p-3 m-1 rounded-lg border border-border hover:bg-muted/30 transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                       <div>

@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserCog, ChevronLeft, ChevronRight, UserCheck, Search } from "lucide-react";
-import { format } from "date-fns";
+import { formatDisplayShortDateTime, formatDisplayTime } from "@/lib/display-timezone";
 
 type Instructor = {
   id: string;
@@ -37,7 +37,7 @@ const periodLabels: Record<Period, string> = {
 
 function formatAttendanceTime(iso: string | null, period: Period): string {
   if (!iso) return "No time";
-  return format(new Date(iso), period === "today" ? "hh:mm a" : "MMM d, hh:mm a");
+  return period === "today" ? formatDisplayTime(iso) : formatDisplayShortDateTime(iso);
 }
 
 function getRowAttendanceDisplay(instructor: Instructor, filter: Filter, period: Period) {

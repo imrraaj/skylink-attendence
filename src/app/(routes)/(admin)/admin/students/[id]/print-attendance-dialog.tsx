@@ -14,8 +14,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Printer, Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { pdf, Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
-import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { formatDisplayFullDate, formatDisplayTime } from "@/lib/display-timezone";
 
 // --- PDF Generate Function --- //
 type Session = { checkInAt: string; checkOutAt: string | null };
@@ -78,13 +79,13 @@ function PdfDocument({
           </View>
 
           {sessions.map((s, i) => {
-            const dateStr = format(new Date(s.checkInAt), "MMM d, yyyy");
-            const inStr = format(new Date(s.checkInAt), "hh:mm a");
+            const dateStr = formatDisplayFullDate(s.checkInAt);
+            const inStr = formatDisplayTime(s.checkInAt);
             let outStr = "-";
             let durStr = "-";
 
             if (s.checkOutAt) {
-              outStr = format(new Date(s.checkOutAt), "hh:mm a");
+              outStr = formatDisplayTime(s.checkOutAt);
               const diffMins = Math.floor((new Date(s.checkOutAt).getTime() - new Date(s.checkInAt).getTime()) / 60000);
               const h = Math.floor(diffMins / 60);
               const m = diffMins % 60;

@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     const roleFilter = url.searchParams.get("role") ?? ""; // "student" | "instructor" | ""
     const periodParam = url.searchParams.get("period") ?? "week";
     const attendancePeriod = isAttendancePeriod(periodParam) ? periodParam : "week";
-    const attendanceOffset = parseInt(url.searchParams.get("attendanceOffset") ?? "0");
+    const parsedAttendanceOffset = Number.parseInt(url.searchParams.get("attendanceOffset") ?? "0", 10);
+    const attendanceOffset = Number.isFinite(parsedAttendanceOffset) ? parsedAttendanceOffset : 0;
     const { start, end } = getAttendancePeriodRange(attendancePeriod, attendanceOffset);
     const limit = 20;
     const pageOffset = (page - 1) * limit;

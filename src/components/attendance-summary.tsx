@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getStartOfWeek, type AttendancePeriod } from "@/lib/attendance-period";
+import { formatDisplayShortDate, formatDisplayTime } from "@/lib/display-timezone";
 import {
   addDays,
   addMonths,
@@ -56,11 +57,11 @@ function formatDuration(minutes: number): string {
 }
 
 function formatTime(iso: string): string {
-  return format(new Date(iso), "hh:mm a");
+  return formatDisplayTime(iso);
 }
 
 function formatDate(iso: string): string {
-  return format(new Date(iso), "MMM d");
+  return formatDisplayShortDate(iso);
 }
 
 function getPeriodDateRange(period: Period, offset: number): string {
