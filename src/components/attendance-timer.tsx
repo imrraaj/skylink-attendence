@@ -20,7 +20,17 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function AttendanceTimer() {
+function notifyAttendanceUpdated(userId?: string) {
+  window.dispatchEvent(new CustomEvent("attendance-updated", { detail: { userId } }));
+}
+
+export default function AttendanceTimer({
+  userId,
+  subjectName,
+}: {
+  userId?: string;
+  subjectName?: string;
+}) {
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [isPending, setIsPending] = useState(false);
@@ -28,7 +38,8 @@ export default function AttendanceTimer() {
 
   const fetchActiveSession = useCallback(async () => {
     try {
-      const res = await fetch("/api/attendance");
+      const params = userId ? `?${new URLSearchParams({ userId })}` : "";
+      const res = await fetch(`/api/attendance${params}`);
       const data = await res.json();
       setActiveSession(data.activeSession);
       if (data.activeSession) {
@@ -38,7 +49,7 @@ export default function AttendanceTimer() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     fetchActiveSession();
@@ -60,7 +71,7 @@ export default function AttendanceTimer() {
       const res = await fetch("/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ action, userId }),
       });
       const data = await res.json();
 
@@ -72,11 +83,13 @@ export default function AttendanceTimer() {
       if (action === "check-in") {
         setActiveSession(data.session);
         setElapsed(0);
-        toast.success("Checked in successfully!");
+        notifyAttendanceUpdated(userId);
+        toast.success(subjectName ? `${subjectName} checked in successfully!` : "Checked in successfully!");
       } else {
         setActiveSession(null);
         setElapsed(0);
-        toast.success("Checked out successfully!");
+        notifyAttendanceUpdated(userId);
+        toast.success(subjectName ? `${subjectName} checked out successfully!` : "Checked out successfully!");
         window.location.reload();
       }
     } catch {

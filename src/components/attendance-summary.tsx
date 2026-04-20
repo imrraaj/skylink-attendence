@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,9 +8,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { getStartOfWeek, type AttendancePeriod } from "@/lib/attendance-period";
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInCalendarDays,
+  differenceInCalendarMonths,
+  differenceInCalendarWeeks,
+  differenceInCalendarYears,
+  differenceInMinutes,
+  endOfMonth,
+  endOfYear,
+  format,
+  getMonth,
+  getYear,
+  startOfDay,
+  startOfMonth,
+  startOfYear,
+} from "date-fns";
 
-type Period = "today" | "week" | "month" | "year";
+type Period = AttendancePeriod;
 
 type Session = {
   id: string;
@@ -32,74 +56,65 @@ function formatDuration(minutes: number): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return format(new Date(iso), "hh:mm a");
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
-function getStartOfWeek(d: Date): Date {
-  const result = new Date(d);
-  result.setDate(result.getDate() - result.getDay());
-  result.setHours(0, 0, 0, 0);
-  return result;
+  return format(new Date(iso), "MMM d");
 }
 
 function getPeriodDateRange(period: Period, offset: number): string {
   const now = new Date();
-  const fmt = (d: Date) => d.toLocaleDateString([], { month: "short", day: "numeric" });
+  const fmt = (d: Date) => format(d, "MMM d");
 
   if (period === "today") {
-    const d = new Date(now);
-    d.setDate(d.getDate() + offset);
-    return fmt(d);
+    return fmt(addDays(now, offset));
   }
 
   if (period === "week") {
-    const start = getStartOfWeek(now);
-    start.setDate(start.getDate() + offset * 7);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
+    const start = addWeeks(getStartOfWeek(now), offset);
+    const end = addDays(start, 6);
     return `${fmt(start)} – ${fmt(end)}`;
   }
 
   if (period === "month") {
-    const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-    const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+    const month = addMonths(now, offset);
+    const start = startOfMonth(month);
+    const end = endOfMonth(month);
     return `${fmt(start)} – ${fmt(end)}`;
   }
 
-  const year = now.getFullYear() + offset;
-  return `Jan 1 – Dec 31, ${year}`;
+  const year = addYears(now, offset);
+  return `${fmt(startOfYear(year))} – ${format(endOfYear(year), "MMM d, yyyy")}`;
 }
 
 function getSelectedDateForPeriod(period: Period, offset: number): Date {
   const now = new Date();
   if (period === "today") {
-    const d = new Date(now);
-    d.setDate(d.getDate() + offset);
-    return d;
+    return addDays(now, offset);
   }
   if (period === "week") {
-    const start = getStartOfWeek(now);
-    start.setDate(start.getDate() + offset * 7);
-    return start;
+    return addWeeks(getStartOfWeek(now), offset);
   }
   if (period === "month") {
-    return new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    return startOfMonth(addMonths(now, offset));
   }
-  return new Date(now.getFullYear() + offset, 0, 1);
+  return startOfYear(addYears(now, offset));
 }
 
 function sessionDuration(s: Session): number {
   if (!s.checkOutAt) return 0;
-  return Math.floor((new Date(s.checkOutAt).getTime() - new Date(s.checkInAt).getTime()) / 60000);
+  return differenceInMinutes(new Date(s.checkOutAt), new Date(s.checkInAt));
+}
+
+function toDateTimeLocalValue(iso: string | null): string {
+  if (!iso) return "";
+  return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
 }
 
 // Month picker grid
 function MonthPicker({ selected, onSelect }: { selected: Date; onSelect: (d: Date) => void }) {
-  const [year, setYear] = useState(selected.getFullYear());
+  const [year, setYear] = useState(getYear(selected));
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   return (
@@ -117,7 +132,7 @@ function MonthPicker({ selected, onSelect }: { selected: Date; onSelect: (d: Dat
         {months.map((m, i) => (
           <Button
             key={m}
-            variant={i === selected.getMonth() && year === selected.getFullYear() ? "default" : "outline"}
+            variant={i === getMonth(selected) && year === getYear(selected) ? "default" : "outline"}
             size="sm"
             className="text-xs"
             onClick={() => onSelect(new Date(year, i, 1))}
@@ -132,8 +147,8 @@ function MonthPicker({ selected, onSelect }: { selected: Date; onSelect: (d: Dat
 
 // Year picker grid
 function YearPicker({ selected, onSelect }: { selected: Date; onSelect: (d: Date) => void }) {
-  const currentYear = new Date().getFullYear();
-  const [decadeStart, setDecadeStart] = useState(Math.floor(selected.getFullYear() / 10) * 10);
+  const currentYear = getYear(new Date());
+  const [decadeStart, setDecadeStart] = useState(Math.floor(getYear(selected) / 10) * 10);
   const years = Array.from({ length: 12 }, (_, i) => decadeStart - 1 + i);
 
   return (
@@ -157,7 +172,7 @@ function YearPicker({ selected, onSelect }: { selected: Date; onSelect: (d: Date
         {years.map((y) => (
           <Button
             key={y}
-            variant={y === selected.getFullYear() ? "default" : "outline"}
+            variant={y === getYear(selected) ? "default" : "outline"}
             size="sm"
             className="text-xs"
             onClick={() => onSelect(new Date(y, 0, 1))}
@@ -186,29 +201,22 @@ function DateRangePicker({
   function handleDaySelect(date: Date | undefined) {
     if (!date) return;
     if (period === "today") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      date.setHours(0, 0, 0, 0);
-      const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-      onOffsetChange(diffDays);
+      onOffsetChange(differenceInCalendarDays(startOfDay(date), startOfDay(now)));
     } else if (period === "week") {
       const currentWeekStart = getStartOfWeek(now);
       const selectedWeekStart = getStartOfWeek(date);
-      const diffWeeks = Math.round((selectedWeekStart.getTime() - currentWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      onOffsetChange(diffWeeks);
+      onOffsetChange(differenceInCalendarWeeks(selectedWeekStart, currentWeekStart, { weekStartsOn: 1 }));
     }
     setOpen(false);
   }
 
   function handleMonthSelect(date: Date) {
-    const diffMonths = (date.getFullYear() - now.getFullYear()) * 12 + (date.getMonth() - now.getMonth());
-    onOffsetChange(diffMonths);
+    onOffsetChange(differenceInCalendarMonths(date, now));
     setOpen(false);
   }
 
   function handleYearSelect(date: Date) {
-    const diffYears = date.getFullYear() - now.getFullYear();
-    onOffsetChange(diffYears);
+    onOffsetChange(differenceInCalendarYears(date, now));
     setOpen(false);
   }
 
@@ -232,6 +240,7 @@ function DateRangePicker({
               selected={selectedDate}
               onSelect={handleDaySelect}
               defaultMonth={selectedDate}
+              weekStartsOn={1}
               disabled={{ after: new Date() }}
             />
           )}
@@ -257,9 +266,120 @@ function DateRangePicker({
   );
 }
 
-function PeriodContent({ userId, period, offset }: { userId: string; period: Period; offset: number }) {
+function EditSessionDialog({
+  session,
+  onSaved,
+}: {
+  session: Session;
+  onSaved: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    checkInAt: toDateTimeLocalValue(session.checkInAt),
+    checkOutAt: toDateTimeLocalValue(session.checkOutAt),
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    setForm({
+      checkInAt: toDateTimeLocalValue(session.checkInAt),
+      checkOutAt: toDateTimeLocalValue(session.checkOutAt),
+    });
+  }, [open, session]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/attendance/${session.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkInAt: new Date(form.checkInAt).toISOString(),
+          checkOutAt: form.checkOutAt ? new Date(form.checkOutAt).toISOString() : null,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error ?? "Failed to update attendance entry");
+        return;
+      }
+
+      toast.success("Attendance entry updated");
+      setOpen(false);
+      onSaved();
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8 px-2">
+          <Pencil className="size-3.5" />
+          <span className="sr-only">Edit attendance entry</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Attendance Entry</DialogTitle>
+          <DialogDescription>Update the check-in or check-out time for this entry.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor={`check-in-${session.id}`}>Check In</Label>
+            <Input
+              id={`check-in-${session.id}`}
+              type="datetime-local"
+              value={form.checkInAt}
+              onChange={(event) => setForm((current) => ({ ...current, checkInAt: event.target.value }))}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor={`check-out-${session.id}`}>Check Out</Label>
+            <Input
+              id={`check-out-${session.id}`}
+              type="datetime-local"
+              value={form.checkOutAt}
+              onChange={(event) => setForm((current) => ({ ...current, checkOutAt: event.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">Leave empty if the session is still active.</p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="size-4 mr-2 animate-spin" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PeriodContent({
+  userId,
+  period,
+  offset,
+  canManage,
+}: {
+  userId: string;
+  period: Period;
+  offset: number;
+  canManage: boolean;
+}) {
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -273,6 +393,38 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
   }, [userId, period, offset]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    function handleAttendanceUpdated(event: Event) {
+      const detail = (event as CustomEvent<{ userId?: string }>).detail;
+      if (!detail?.userId || detail.userId === userId) load();
+    }
+
+    window.addEventListener("attendance-updated", handleAttendanceUpdated);
+    return () => window.removeEventListener("attendance-updated", handleAttendanceUpdated);
+  }, [load, userId]);
+
+  async function handleDelete(sessionId: string) {
+    if (!window.confirm("Delete this attendance entry?")) return;
+
+    setDeletingId(sessionId);
+    try {
+      const res = await fetch(`/api/attendance/${sessionId}`, { method: "DELETE" });
+      const json = await res.json();
+
+      if (!res.ok) {
+        toast.error(json.error ?? "Failed to delete attendance entry");
+        return;
+      }
+
+      toast.success("Attendance entry deleted");
+      load();
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -349,7 +501,9 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
                       <span className="text-muted-foreground"> → {formatTime(s.checkOutAt)}</span>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground">{formatDate(s.checkInAt)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {s.checkOutAt ? "check in/out time" : "check in time"} • {formatDate(s.checkInAt)}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 sm:justify-end">
@@ -362,6 +516,25 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
                     Active
                   </Badge>
                 )}
+                {canManage && (
+                  <>
+                    <EditSessionDialog session={s} onSaved={load} />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={() => handleDelete(s.id)}
+                      disabled={deletingId === s.id}
+                    >
+                      {deletingId === s.id ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-3.5" />
+                      )}
+                      <span className="sr-only">Delete attendance entry</span>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -372,14 +545,20 @@ function PeriodContent({ userId, period, offset }: { userId: string; period: Per
 }
 
 const periodLabels: Record<Period, string> = {
-  today: "Today",
-  week: "Week",
-  month: "Month",
-  year: "Year",
+  today: "Daily",
+  week: "Weekly",
+  month: "Monthly",
+  year: "Yearly",
 };
 
-export default function AttendanceSummary({ userId }: { userId: string }) {
-  const [activeTab, setActiveTab] = useState<Period>("today");
+export default function AttendanceSummary({
+  userId,
+  canManage = false,
+}: {
+  userId: string;
+  canManage?: boolean;
+}) {
+  const [activeTab, setActiveTab] = useState<Period>("week");
   const [offset, setOffset] = useState(0);
 
   function handleTabChange(tab: Period) {
@@ -396,7 +575,7 @@ export default function AttendanceSummary({ userId }: { userId: string }) {
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="today" onValueChange={(v) => handleTabChange(v as Period)}>
+        <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as Period)}>
           <TabsList className="w-full grid grid-cols-4">
             {(["today", "week", "month", "year"] as Period[]).map((p) => (
               <TabsTrigger key={p} value={p}>{periodLabels[p]}</TabsTrigger>
@@ -404,7 +583,7 @@ export default function AttendanceSummary({ userId }: { userId: string }) {
           </TabsList>
           {(["today", "week", "month", "year"] as Period[]).map((p) => (
             <TabsContent key={p} value={p}>
-              <PeriodContent userId={userId} period={p} offset={activeTab === p ? offset : 0} />
+              <PeriodContent userId={userId} period={p} offset={activeTab === p ? offset : 0} canManage={canManage} />
             </TabsContent>
           ))}
         </Tabs>

@@ -8,21 +8,61 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserCog, ChevronLeft, ChevronRight, UserCheck, Search } from "lucide-react";
+import { format } from "date-fns";
 
 type Instructor = {
   id: string;
   name: string;
   firstName?: string;
   lastName?: string;
-  email: string;
   role: string;
   createdAt: string | null;
   isCheckedIn: boolean;
   status: string;
   banned?: boolean;
+  firstCheckInAt: string | null;
+  activeCheckInAt: string | null;
+  latestCheckOutAt: string | null;
 };
 
 type Filter = "" | "checked-in" | "checked-out";
+type Period = "today" | "week" | "month" | "year";
+
+const periodLabels: Record<Period, string> = {
+  today: "Daily",
+  week: "Weekly",
+  month: "Monthly",
+  year: "Yearly",
+};
+
+function formatAttendanceTime(iso: string | null, period: Period): string {
+  if (!iso) return "No time";
+  return format(new Date(iso), period === "today" ? "hh:mm a" : "MMM d, hh:mm a");
+}
+
+function getRowAttendanceDisplay(instructor: Instructor, filter: Filter, period: Period) {
+  if (filter === "checked-in") {
+    return {
+      label: "check in time",
+      value: formatAttendanceTime(instructor.activeCheckInAt, period),
+      empty: !instructor.activeCheckInAt,
+    };
+  }
+
+  if (filter === "checked-out") {
+    return {
+      label: "check out time",
+      value: formatAttendanceTime(instructor.latestCheckOutAt, period),
+      empty: !instructor.latestCheckOutAt,
+    };
+  }
+
+  return {
+    label: "check in time",
+    value: formatAttendanceTime(instructor.firstCheckInAt, period),
+    empty: !instructor.firstCheckInAt,
+  };
+}
 
 export default function InstructorsClient() {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -32,6 +72,7 @@ export default function InstructorsClient() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("");
+  const [period, setPeriod] = useState<Period>("week");
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -49,9 +90,14 @@ export default function InstructorsClient() {
     setPage(1);
   }
 
+  function handlePeriodChange(nextPeriod: Period) {
+    setPeriod(nextPeriod);
+    setPage(1);
+  }
+
   useEffect(() => {
     setLoading(true);
-    const params = new URLSearchParams({ page: String(page), role: "instructor" });
+    const params = new URLSearchParams({ page: String(page), role: "instructor", period });
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (filter) params.set("filter", filter);
 
@@ -62,7 +108,7 @@ export default function InstructorsClient() {
         setHasMore((d.students ?? []).length === 20);
       })
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, filter]);
+  }, [page, debouncedSearch, filter, period]);
 
   return (
     <div className="space-y-6">
@@ -87,7 +133,7 @@ export default function InstructorsClient() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name or email..."
+                placeholder="Search by name..."
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-9"
@@ -119,6 +165,19 @@ export default function InstructorsClient() {
                 Checked Out
               </Button>
             </div>
+
+            <div className="flex flex-wrap gap-1">
+              {(["today", "week", "month", "year"] as Period[]).map((p) => (
+                <Button
+                  key={p}
+                  variant={period === p ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => handlePeriodChange(p)}
+                >
+                  {periodLabels[p]}
+                </Button>
+              ))}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -130,7 +189,7 @@ export default function InstructorsClient() {
                     <Skeleton className="w-2 h-2 rounded-full" />
                     <div className="space-y-1.5">
                       <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-44" />
+                      <Skeleton className="h-3 w-28" />
                     </div>
                   </div>
                   <Skeleton className="h-4 w-20 hidden sm:block" />
@@ -146,37 +205,41 @@ export default function InstructorsClient() {
             </div>
           ) : (
             <div className="space-y-2">
-              {instructors.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => router.push(`/admin/instructors/${s.id}`)}
-                  className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${s.isCheckedIn ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`} />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{s.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+              {instructors.map((s) => {
+                const attendanceDisplay = getRowAttendanceDisplay(s, filter, period);
+
+                return (
+                  <button
+                    key={s.id}
+                    onClick={() => router.push(`/admin/instructors/${s.id}`)}
+                    className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors text-left"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${s.isCheckedIn ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{s.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{attendanceDisplay.label}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {s.banned && (
-                      <Badge variant="destructive" className="text-xs">
-                        Banned
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant={attendanceDisplay.empty ? "secondary" : "outline"} className="text-xs">
+                        {attendanceDisplay.value}
                       </Badge>
-                    )}
-                    {s.isCheckedIn && !s.banned && (
-                      <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-xs gap-1">
-                        <UserCheck className="size-3" />
-                        Active
-                      </Badge>
-                    )}
-                    <span className="text-xs text-muted-foreground hidden md:block">
-                      {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : ""}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                      {s.banned && (
+                        <Badge variant="destructive" className="text-xs">
+                          Banned
+                        </Badge>
+                      )}
+                      {s.isCheckedIn && !s.banned && (
+                        <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-xs gap-1">
+                          <UserCheck className="size-3" />
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
 

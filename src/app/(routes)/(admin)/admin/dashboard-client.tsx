@@ -6,41 +6,40 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, UserCheck, Clock, FileCheck } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
 
 type ActiveStudent = {
   id: string;
   name: string;
-  email: string;
   isCheckedIn: boolean;
   status: string;
+  activeCheckInAt: string | null;
 };
 
 type PendingRegistration = { id: string };
 
-function formatElapsed(checkInAt: string): string {
-  const ms = Date.now() - new Date(checkInAt).getTime();
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+function formatTime(iso: string | null): string {
+  if (!iso) return "No time";
+  return format(new Date(iso), "hh:mm a");
 }
 
 export default function AdminDashboardClient({ adminName }: { adminName: string }) {
-  const [students, setStudents] = useState<(ActiveStudent & { checkInAt?: string })[]>([]);
+  const [students, setStudents] = useState<ActiveStudent[]>([]);
   const [totalStudents, setTotalStudents] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [, setTick] = useState(0);
 
   useEffect(() => {
     async function load() {
-      const [studRes, regRes] = await Promise.all([
+      const [studRes, activeRes, regRes] = await Promise.all([
         fetch("/api/admin/students?role=student"),
+        fetch("/api/admin/students?role=student&filter=checked-in"),
         fetch("/api/admin/registrations"),
       ]);
-      const { students: s, total } = await studRes.json();
+      const { total } = await studRes.json();
+      const { students: active } = await activeRes.json();
       const { registrations: r } = await regRes.json();
-      setStudents(s ?? []);
+      setStudents(active ?? []);
       setTotalStudents(total ?? 0);
       setPendingCount((r ?? []).length);
       setLoading(false);
@@ -48,13 +47,7 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
     load();
   }, []);
 
-  // Tick every minute to update elapsed times
-  useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const activeStudents = students.filter((s) => s.isCheckedIn);
+  const activeStudents = students;
 
   return (
     <div className="space-y-6">
@@ -89,7 +82,7 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
         <StatCard
           icon={Clock}
           label="Today"
-          value={new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          value={format(new Date(), "MMM d")}
           color="blue"
         />
       </div>
@@ -132,11 +125,11 @@ export default function AdminDashboardClient({ adminName }: { adminName: string 
                       <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                       <div>
                         <p className="text-sm font-medium">{s.name}</p>
-                        <p className="text-xs text-muted-foreground">{s.email}</p>
+                        <p className="text-xs text-muted-foreground">check in time</p>
                       </div>
                     </div>
                     <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
-                      Active
+                      {formatTime(s.activeCheckInAt)}
                     </Badge>
                   </div>
                 </Link>
