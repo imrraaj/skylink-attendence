@@ -31,7 +31,7 @@ import {
   startOfYear,
 } from "date-fns";
 import { getStartOfWeek } from "@/lib/attendance-period";
-import { formatDisplayShortDateTime, formatDisplayTime } from "@/lib/display-timezone";
+import { formatDisplayShortDateTime, formatDisplayTime, getDisplayCalendarDate } from "@/lib/display-timezone";
 
 type Student = {
   id: string;
@@ -98,7 +98,7 @@ function getRowAttendanceDisplay(student: Student, filter: Filter, period: Perio
 }
 
 function getPeriodDateRange(period: Period, offset: number): string {
-  const now = new Date();
+  const now = getDisplayCalendarDate();
   const fmt = (date: Date) => format(date, "MMM d");
 
   if (period === "today") {
@@ -121,7 +121,7 @@ function getPeriodDateRange(period: Period, offset: number): string {
 }
 
 function getSelectedDateForPeriod(period: Period, offset: number): Date {
-  const now = new Date();
+  const now = getDisplayCalendarDate();
 
   if (period === "today") {
     return addDays(now, offset);
@@ -219,7 +219,7 @@ function PeriodDatePicker({
   onOffsetChange: (offset: number) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const now = new Date();
+  const now = getDisplayCalendarDate();
   const selectedDate = getSelectedDateForPeriod(period, offset);
 
   function handleDaySelect(date: Date | undefined) {
@@ -267,7 +267,7 @@ function PeriodDatePicker({
               onSelect={handleDaySelect}
               defaultMonth={selectedDate}
               weekStartsOn={1}
-              disabled={{ after: new Date() }}
+              disabled={{ after: now }}
             />
           )}
           {period === "month" && <MonthPicker selected={selectedDate} onSelect={handleMonthSelect} />}

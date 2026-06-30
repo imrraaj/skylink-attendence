@@ -138,10 +138,10 @@ export default function PrintAttendanceDialog({
     
     setGenerating(true);
     try {
-      const fromIso = dateRange.from.toISOString();
-      const toIso = dateRange.to.toISOString();
+      const from = format(dateRange.from, "yyyy-MM-dd");
+      const to = format(dateRange.to, "yyyy-MM-dd");
       
-      const res = await fetch(`/api/attendance/summary?userId=${userId}&period=custom&from=${fromIso}&to=${toIso}`);
+      const res = await fetch(`/api/attendance/summary?userId=${userId}&period=custom&from=${from}&to=${to}`);
       if (!res.ok) throw new Error("Failed to fetch data");
       const data = await res.json();
       

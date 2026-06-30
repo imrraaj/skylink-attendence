@@ -14,7 +14,13 @@ import { Label } from "@/components/ui/label";
 import { Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { getStartOfWeek, type AttendancePeriod } from "@/lib/attendance-period";
-import { formatDisplayShortDate, formatDisplayTime } from "@/lib/display-timezone";
+import {
+  formatDisplayDateTimeLocalInput,
+  formatDisplayShortDate,
+  formatDisplayTime,
+  getDisplayCalendarDate,
+  parseDisplayDateTimeLocalInput,
+} from "@/lib/display-timezone";
 import {
   addDays,
   addMonths,
@@ -65,7 +71,7 @@ function formatDate(iso: string): string {
 }
 
 function getPeriodDateRange(period: Period, offset: number): string {
-  const now = new Date();
+  const now = getDisplayCalendarDate();
   const fmt = (d: Date) => format(d, "MMM d");
 
   if (period === "today") {
@@ -90,7 +96,7 @@ function getPeriodDateRange(period: Period, offset: number): string {
 }
 
 function getSelectedDateForPeriod(period: Period, offset: number): Date {
-  const now = new Date();
+  const now = getDisplayCalendarDate();
   if (period === "today") {
     return addDays(now, offset);
   }
@@ -106,11 +112,6 @@ function getSelectedDateForPeriod(period: Period, offset: number): Date {
 function sessionDuration(s: Session): number {
   if (!s.checkOutAt) return 0;
   return differenceInMinutes(new Date(s.checkOutAt), new Date(s.checkInAt));
-}
-
-function toDateTimeLocalValue(iso: string | null): string {
-  if (!iso) return "";
-  return format(new Date(iso), "yyyy-MM-dd'T'HH:mm");
 }
 
 // Month picker grid
@@ -196,7 +197,7 @@ function DateRangePicker({
   onOffsetChange: (offset: number) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const now = new Date();
+  const now = getDisplayCalendarDate();
   const selectedDate = getSelectedDateForPeriod(period, offset);
 
   function handleDaySelect(date: Date | undefined) {
@@ -242,7 +243,7 @@ function DateRangePicker({
               onSelect={handleDaySelect}
               defaultMonth={selectedDate}
               weekStartsOn={1}
-              disabled={{ after: new Date() }}
+              disabled={{ after: now }}
             />
           )}
           {period === "month" && (
@@ -277,15 +278,15 @@ function EditSessionDialog({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    checkInAt: toDateTimeLocalValue(session.checkInAt),
-    checkOutAt: toDateTimeLocalValue(session.checkOutAt),
+    checkInAt: formatDisplayDateTimeLocalInput(session.checkInAt),
+    checkOutAt: formatDisplayDateTimeLocalInput(session.checkOutAt),
   });
 
   useEffect(() => {
     if (!open) return;
     setForm({
-      checkInAt: toDateTimeLocalValue(session.checkInAt),
-      checkOutAt: toDateTimeLocalValue(session.checkOutAt),
+      checkInAt: formatDisplayDateTimeLocalInput(session.checkInAt),
+      checkOutAt: formatDisplayDateTimeLocalInput(session.checkOutAt),
     });
   }, [open, session]);
 
@@ -293,12 +294,20 @@ function EditSessionDialog({
     event.preventDefault();
     setSaving(true);
     try {
+      const checkInAt = parseDisplayDateTimeLocalInput(form.checkInAt);
+      const checkOutAt = form.checkOutAt ? parseDisplayDateTimeLocalInput(form.checkOutAt) : null;
+
+      if (!checkInAt || (form.checkOutAt && !checkOutAt)) {
+        toast.error("Please enter a valid check-in and check-out time");
+        return;
+      }
+
       const res = await fetch(`/api/attendance/${session.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          checkInAt: new Date(form.checkInAt).toISOString(),
-          checkOutAt: form.checkOutAt ? new Date(form.checkOutAt).toISOString() : null,
+          checkInAt: checkInAt.toISOString(),
+          checkOutAt: checkOutAt ? checkOutAt.toISOString() : null,
         }),
       });
       const data = await res.json();
