@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const search = url.searchParams.get("search")?.trim() ?? "";
     const filter = url.searchParams.get("filter") ?? "";
     const roleFilter = url.searchParams.get("role") ?? ""; // "student" | "instructor" | ""
+    const studentStatusFilter = url.searchParams.get("studentStatus") ?? ""; // "active" | "graduated" | ""
     const periodParam = url.searchParams.get("period") ?? "week";
     const attendancePeriod = isAttendancePeriod(periodParam) ? periodParam : "week";
     const parsedAttendanceOffset = Number.parseInt(url.searchParams.get("attendanceOffset") ?? "0", 10);
@@ -46,6 +47,13 @@ export async function GET(req: NextRequest) {
     } else {
       // Show both students and instructors (not admins)
       conditions.push(or(eq(user.role, "student"), eq(user.role, "instructor"))!);
+    }
+
+    if (studentStatusFilter === "active") {
+      conditions.push(eq(user.status, "active"));
+      conditions.push(eq(user.banned, false));
+    } else if (studentStatusFilter === "graduated") {
+      conditions.push(eq(user.banned, true));
     }
 
     if (search) {

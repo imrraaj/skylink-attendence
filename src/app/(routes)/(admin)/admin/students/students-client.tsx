@@ -50,6 +50,7 @@ type Student = {
 
 type Filter = "" | "checked-in" | "checked-out";
 type Period = "today" | "week" | "month" | "year";
+type StudentListMode = "active" | "graduated";
 
 const periodLabels: Record<Period, string> = {
   today: "Daily",
@@ -288,7 +289,7 @@ function PeriodDatePicker({
   );
 }
 
-export default function StudentsClient() {
+export default function StudentsClient({ mode = "active" }: { mode?: StudentListMode }) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -300,6 +301,12 @@ export default function StudentsClient() {
   const [attendanceOffset, setAttendanceOffset] = useState(0);
   const router = useRouter();
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const isGraduatedMode = mode === "graduated";
+  const pageTitle = isGraduatedMode ? "Graduated" : "Students";
+  const pageDescription = isGraduatedMode
+    ? "Students marked as graduated"
+    : "All active students and their attendance status";
+  const cardTitle = isGraduatedMode ? "Graduated Student List" : "Student List";
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -331,11 +338,12 @@ export default function StudentsClient() {
     const params = new URLSearchParams({
       page: String(page),
       role: "student",
+      studentStatus: mode,
       period,
       attendanceOffset: String(attendanceOffset),
     });
     if (debouncedSearch) params.set("search", debouncedSearch);
-    if (filter) params.set("filter", filter);
+    if (!isGraduatedMode && filter) params.set("filter", filter);
 
     fetch(`/api/admin/students?${params}`)
       .then((r) => r.json())
@@ -344,21 +352,21 @@ export default function StudentsClient() {
         setHasMore((d.students ?? []).length === 20);
       })
       .finally(() => setLoading(false));
-  }, [page, debouncedSearch, filter, period, attendanceOffset]);
+  }, [page, debouncedSearch, filter, period, attendanceOffset, isGraduatedMode, mode]);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Students</h1>
-          <p className="text-sm text-muted-foreground mt-1">All registered students and their attendance status</p>
+          <h1 className="text-2xl font-bold">{pageTitle}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{pageDescription}</p>
         </div>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">Student List</CardTitle>
+            <CardTitle className="text-base">{cardTitle}</CardTitle>
             {!loading && (
               <Badge variant="secondary">{students.length} shown</Badge>
             )}
@@ -376,65 +384,69 @@ export default function StudentsClient() {
               />
             </div>
 
-            {/* Status Filter */}
-            <div className="flex flex-wrap gap-1">
-              <Button
-                variant={filter === "" ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => handleFilterChange("")}
-              >
-                All Status
-              </Button>
-              <Button
-                variant={filter === "checked-in" ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => handleFilterChange("checked-in")}
-              >
-                <UserCheck className="size-3.5 mr-1" />
-                Checked In
-              </Button>
-              <Button
-                variant={filter === "checked-out" ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => handleFilterChange("checked-out")}
-              >
-                Checked Out
-              </Button>
-            </div>
+            {!isGraduatedMode && (
+              <>
+                {/* Status Filter */}
+                <div className="flex flex-wrap gap-1">
+                  <Button
+                    variant={filter === "" ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => handleFilterChange("")}
+                  >
+                    All Status
+                  </Button>
+                  <Button
+                    variant={filter === "checked-in" ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => handleFilterChange("checked-in")}
+                  >
+                    <UserCheck className="size-3.5 mr-1" />
+                    Checked In
+                  </Button>
+                  <Button
+                    variant={filter === "checked-out" ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => handleFilterChange("checked-out")}
+                  >
+                    Checked Out
+                  </Button>
+                </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="flex flex-col gap-1 sm:w-48">
-                <Label htmlFor="student-period" className="text-xs text-muted-foreground">
-                  Attendance period
-                </Label>
-                <Select
-                  value={period}
-                  onValueChange={(value) => handlePeriodChange(value as Period)}
-                >
-                  <SelectTrigger id="student-period" className="w-full">
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(["today", "week", "month", "year"] as Period[]).map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {periodLabels[p]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex flex-col gap-1 sm:w-48">
+                    <Label htmlFor="student-period" className="text-xs text-muted-foreground">
+                      Attendance period
+                    </Label>
+                    <Select
+                      value={period}
+                      onValueChange={(value) => handlePeriodChange(value as Period)}
+                    >
+                      <SelectTrigger id="student-period" className="w-full">
+                        <SelectValue placeholder="Select period" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(["today", "week", "month", "year"] as Period[]).map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {periodLabels[p]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="flex flex-col gap-1">
-                <Label className="text-xs text-muted-foreground">
-                  Selected {periodLabels[period].toLowerCase()}
-                </Label>
-                <PeriodDatePicker
-                  period={period}
-                  offset={attendanceOffset}
-                  onOffsetChange={handleAttendanceOffsetChange}
-                />
-              </div>
-            </div>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Selected {periodLabels[period].toLowerCase()}
+                    </Label>
+                    <PeriodDatePicker
+                      period={period}
+                      offset={attendanceOffset}
+                      onOffsetChange={handleAttendanceOffsetChange}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -457,14 +469,19 @@ export default function StudentsClient() {
             <div className="flex flex-col items-center py-12 text-muted-foreground">
               <GraduationCap className="size-10 mb-2 opacity-30" />
               <p className="text-sm">
-                {debouncedSearch || filter ? "No students match your search or filter." : "No students found."}
+                {debouncedSearch || (!isGraduatedMode && filter)
+                  ? "No students match your search or filter."
+                  : isGraduatedMode
+                    ? "No graduated students found."
+                    : "No active students found."}
               </p>
             </div>
           ) : (
             <div className="space-y-2">
               {students.map((s) => {
                 const attendanceDisplay = getRowAttendanceDisplay(s, filter, period);
-                const belowWeeklyRequirement = period === "week" && s.totalMinutes < REQUIRED_WEEKLY_MINUTES;
+                const belowWeeklyRequirement =
+                  !isGraduatedMode && period === "week" && s.totalMinutes < REQUIRED_WEEKLY_MINUTES;
 
                 return (
                   <button
@@ -480,7 +497,9 @@ export default function StudentsClient() {
                       <div className={`w-2 h-2 rounded-full shrink-0 ${s.isCheckedIn ? "bg-green-500 animate-pulse" : "bg-muted-foreground/30"}`} />
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{s.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{attendanceDisplay.label}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {isGraduatedMode ? "graduated student" : attendanceDisplay.label}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -489,14 +508,12 @@ export default function StudentsClient() {
                           Under 25h
                         </Badge>
                       )}
-                      <Badge variant={attendanceDisplay.empty ? "secondary" : "outline"} className="text-xs">
-                        {attendanceDisplay.value}
-                      </Badge>
-                      {s.banned && (
-                        <Badge variant="destructive" className="text-xs">
-                          Banned
+                      {!isGraduatedMode && (
+                        <Badge variant={attendanceDisplay.empty ? "secondary" : "outline"} className="text-xs">
+                          {attendanceDisplay.value}
                         </Badge>
                       )}
+                      {s.banned && <Badge className="text-xs">Graduated</Badge>}
                       {s.isCheckedIn && !s.banned && (
                         <Badge className="bg-green-500/10 text-green-600 border-green-500/20 text-xs gap-1">
                           <UserCheck className="size-3" />

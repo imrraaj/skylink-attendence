@@ -21,7 +21,8 @@ import {
 
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/students", label: "Students", icon: GraduationCap },
+  { href: "/admin/students", label: "Students", icon: Users },
+  { href: "/admin/graduated", label: "Graduated", icon: GraduationCap },
   { href: "/admin/instructors", label: "Instructors", icon: UserCog },
   { href: "/admin/registrations", label: "Registrations", icon: FileCheck },
   { href: "/admin/settings", label: "Settings", icon: Settings },
